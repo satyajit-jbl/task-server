@@ -32,6 +32,29 @@ async function run() {
         const tasksCollection = jobtask.collection('tasks')
         const userCollection = jobtask.collection('users')
 
+        // ✅ Check if user exists
+        app.get("/users/:email", async (req, res) => {
+            const { email } = req.params;
+            const user = await userCollection.findOne({ email });
+
+            res.json({ exists: !!user }); // Returns `{ exists: true }` if user exists, else `{ exists: false }`
+        });
+
+        // ✅ Add user if not exists
+        app.post("/users", async (req, res) => {
+            const { email, name, photo, role } = req.body;
+
+            // Check if user already exists
+            const existingUser = await userCollection.findOne({ email });
+            if (existingUser) {
+                return res.status(400).json({ message: "User already exists" });
+            }
+
+            // Insert new user
+            const result = await userCollection.insertOne({ email, name, photo, role });
+            res.json({ message: "User added successfully", result });
+        });
+
         app.get("/tasks", async (req, res) => {
             const tasks = await tasksCollection.find().toArray();
             res.send(tasks);
